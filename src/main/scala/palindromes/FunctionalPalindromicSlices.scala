@@ -2,13 +2,13 @@ package palindromes
 
 import scala.annotation.tailrec
 
-trait PalindromeType { val mirrorOffset: Int }
-case object Even extends PalindromeType { override val mirrorOffset = 1 }
-case object Odd extends PalindromeType { override val mirrorOffset = 0 }
-
-case class Palindrome(offset: Int, radius: Long, pType: PalindromeType)
-
-class FunctionalPalindromicSlices(input: String) extends PalindromicSlices {
+/***
+  * Looking for palindromic slices of a given input string
+  * It is the same algorithm as in @ImperativePalindromicSlices but this is written in more functional-style
+  * @param input string with palindromic slices to be found
+  * @param doLogResults boolean flag to indicate if it should print palindrome slices found on STDOUT
+  */
+class FunctionalPalindromicSlices(input: String, doLogResults: Boolean = true) extends PalindromicSlices {
   val guardedInput = s"@$input#"
 
   override def count(): Long = {
@@ -16,9 +16,37 @@ class FunctionalPalindromicSlices(input: String) extends PalindromicSlices {
     val evens = lookForPalindromes(Even)
     val all = odds ++ evens
 
-    printPalindromes(all)
+    if(doLogResults) { printPalindromes(all) }
 
     all.map(_.radius).sum
+  }
+
+  private trait PalindromeType { val mirrorOffset: Int }
+  private case object Even extends PalindromeType { override val mirrorOffset = 1 }
+  private case object Odd extends PalindromeType { override val mirrorOffset = 0 }
+
+  private case class Palindrome(offset: Int, radius: Long, pType: PalindromeType)
+
+
+  private def lookForPalindromes(palindromeType: PalindromeType): List[Palindrome] = {
+    val n = input.length
+
+    @tailrec
+    def go(radius: Int, index: Int, currentPalindromes: Map[Int, Palindrome]): Map[Int, Palindrome] = {
+      if(index <= n) {
+        val newRadius = radiusForIndex(radius, index, palindromeType)
+        val newPalindromes = if(newRadius <= 0) { currentPalindromes }
+          else { currentPalindromes + (index -> Palindrome(index - 1, newRadius, palindromeType)) }
+
+        val (checked, includingSubpalindromes) = markSubpalindromes(index, newRadius, newPalindromes)
+
+        go(0 max (newRadius - checked), index + checked, includingSubpalindromes)
+      } else {
+        currentPalindromes
+      }
+    }
+
+    go(0, 1, Map()).values.toList
   }
 
   @tailrec
@@ -57,34 +85,11 @@ class FunctionalPalindromicSlices(input: String) extends PalindromicSlices {
     go(1, previousPalindromes)
   }
 
-  private def lookForPalindromes(palindromeType: PalindromeType): List[Palindrome] = {
-    val n = input.length
-
-    @tailrec
-    def go(radius: Int, index: Int, currentPalindromes: Map[Int, Palindrome]): Map[Int, Palindrome] = {
-      if(index <= n) {
-        val newRadius = radiusForIndex(radius, index, palindromeType)
-        val newPalindromes = if(newRadius <= 0) currentPalindromes
-          else currentPalindromes + (index -> Palindrome(index - 1, newRadius, palindromeType))
-
-        val (checked, includingSubpalindromes) = markSubpalindromes(index, newRadius, newPalindromes)
-
-        go(0 max (newRadius - checked), index + checked, includingSubpalindromes)
-      } else {
-        currentPalindromes
-      }
-    }
-
-    go(0, 1, Map()).values.toList
-  }
-
   private def printAll(palindromes: Iterable[Palindrome]) = {
     println(s"$input")
     palindromes.foreach(p => {
       for(r <- p.radius to 1 by -1) {
-        for (_ <- 1 to p.offset - r.toInt) {
-          print(" ")
-        }
+        print(List.fill(p.offset - r.toInt){' '}.mkString)
         println(input.substring(p.offset - r.toInt, p.offset + r.toInt + p.pType.mirrorOffset))
       }
     })

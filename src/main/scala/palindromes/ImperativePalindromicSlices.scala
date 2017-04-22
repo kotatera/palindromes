@@ -3,12 +3,13 @@ package palindromes
 import scala.collection.mutable
 
 /***
-  * Rewritten to Scala based on http://codepad.org/vAGMSNKG (almost 'as-is')
+  * Looking for palindromic slices of a given input string
+  * Rewritten to Scala based on http://codepad.org/vAGMSNKG (almost 'as-is', i.e. in imperative style)
   * @param input string with palindromic slices to be found
   */
 class ImperativePalindromicSlices(input: String) extends PalindromicSlices {
-  val guarded = s"@$input#"
-  val n = input.length
+  private val guarded = s"@$input#"
+  private val n = input.length
 
   override def count(): Long = {
     val odds = mutable.ArrayBuffer.fill(n + 1) { 0 }
