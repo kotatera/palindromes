@@ -35,6 +35,11 @@ trait TestCases[T <: PalindromicSlices] extends FunSuite {
     })
   }
 
+  test("Long string with no palindromes should results in 0") {
+    val input = List.fill(200){"qwertyuiopasdfghjklzxcvbnm"}.mkString
+    assert(uut(input).count() == 0)
+  }
+
   test("For some known cases palindromic slices should be calculated properly") {
     Map(
       "aabbaa" -> 5,
